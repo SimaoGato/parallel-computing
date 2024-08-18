@@ -5,7 +5,7 @@ CC = gcc
 CFLAGS = -O3
 
 # Target executable
-TARGET = myprogram
+TARGET = bitmap 
 
 # Source files
 SRC = main.c bitmap.c

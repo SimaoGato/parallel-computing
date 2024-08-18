@@ -7,16 +7,25 @@
 
 
 
-int main(void)
-{
-	uchar *image = calloc(XSIZE * YSIZE * 3, 1); // Three uchars per pixel (RGB)
-	readbmp("before.bmp", image);
+int main(void) {
+    uchar *image = calloc(XSIZE * YSIZE * 3, 1); // Three uchars per pixel (RGB)
+    if (image == NULL) {
+        printf("Error allocating memory for image.\n");
+        return 1;
+    }
 
-	// Alter the image here
-	invert_colors(image, XSIZE, YSIZE);
+    readbmp("before.bmp", image);
 
-	savebmp("after.bmp", image, XSIZE, YSIZE);
+    // Resize the image
+    uchar *resized_image = NULL;
+    resize_image(image, XSIZE, YSIZE, &resized_image);
 
-	free(image);
-	return 0;
+    // Invert the colors of the resized image
+    invert_colors(resized_image, XSIZE * 2, YSIZE * 2);
+
+    savebmp("after.bmp", resized_image, XSIZE * 2, YSIZE * 2);
+
+    free(image);
+    free(resized_image);
+    return 0;
 }

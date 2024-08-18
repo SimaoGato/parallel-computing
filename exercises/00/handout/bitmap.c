@@ -74,3 +74,36 @@ void invert_colors(uchar *image, int width, int height) {
         }
     }
 }
+
+// Function to resize the image to double its size
+void resize_image(uchar *image, int width, int height, uchar **new_image) {
+    int new_width = width * 2;
+    int new_height = height * 2;
+
+    // Allocate memory for the new image
+    *new_image = (uchar *)calloc(new_width * new_height * 3, 1);
+    if (*new_image == NULL) {
+        printf("Error allocating memory for resized image.\n");
+        return;
+    }
+
+    for (int y = 0; y < height; y++) {
+        for (int x = 0; x < width; x++) {
+            // Get the original pixel
+            uchar *pixel = &image[(y * width + x) * 3];
+
+            // Map this pixel to 4 pixels in the new image
+            for (int dy = 0; dy < 2; dy++) {
+                for (int dx = 0; dx < 2; dx++) {
+                    int new_x = x * 2 + dx;
+                    int new_y = y * 2 + dy;
+                    uchar *new_pixel = &(*new_image)[(new_y * new_width + new_x) * 3];
+                    new_pixel[0] = pixel[0];
+                    new_pixel[1] = pixel[1];
+                    new_pixel[2] = pixel[2];
+                }
+            }
+        }
+    }
+}
+
