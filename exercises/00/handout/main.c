@@ -23,6 +23,9 @@ int main(void) {
     // Invert the colors of the resized image
     invert_colors(resized_image, XSIZE * 2, YSIZE * 2);
 
+    // Invert the image
+    invert_image(resized_image, XSIZE * 2, YSIZE * 2);
+
     savebmp("after.bmp", resized_image, XSIZE * 2, YSIZE * 2);
 
     free(image);

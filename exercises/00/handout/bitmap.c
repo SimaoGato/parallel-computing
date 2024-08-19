@@ -107,3 +107,33 @@ void resize_image(uchar *image, int width, int height, uchar **new_image) {
     }
 }
 
+// Function to invert the image (upside down)
+void invert_image(uchar *image, int width, int height) { 
+    // Allocate memory for the new image
+	uchar *new_image = (uchar *)calloc(width * height * 3, 1);
+	if (new_image == NULL) {
+		printf("Error allocating memory for inverted image.\n");
+		return;
+	}
+
+	for (int y = 0; y < height; y++) {
+		for (int x = 0; x < width; x++) {
+			// Get the original pixel
+			uchar *pixel = &image[(y * width + x) * 3];
+			// Get the new pixel
+			uchar *new_pixel = &new_image[((height - y - 1) * width + x) * 3];
+			new_pixel[0] = pixel[0];
+			new_pixel[1] = pixel[1];
+			new_pixel[2] = pixel[2];
+		}
+	}
+
+	// Copy the new image to the original image
+	for (int i = 0; i < width * height * 3; i++) {
+		image[i] = new_image[i];
+	}
+
+	// Free the memory
+	free(new_image);
+}
+
