@@ -16,15 +16,15 @@ int main(void) {
 
     readbmp("before.bmp", image);
 
+    // Invert the image (upside down)
+    invert_image(image, XSIZE, YSIZE);
+
     // Resize the image
     uchar *resized_image = NULL;
     resize_image(image, XSIZE, YSIZE, &resized_image);
 
     // Invert the colors of the resized image
     invert_colors(resized_image, XSIZE * 2, YSIZE * 2);
-
-    // Invert the image
-    invert_image(resized_image, XSIZE * 2, YSIZE * 2);
 
     savebmp("after.bmp", resized_image, XSIZE * 2, YSIZE * 2);
 
