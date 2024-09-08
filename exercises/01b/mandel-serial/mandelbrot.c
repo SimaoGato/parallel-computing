@@ -5,7 +5,7 @@
 #define XSIZE 2560
 #define YSIZE 2048
 
-#define MAXITER 255
+#define MAXITER 512 
 
 double xleft=-2.01;
 double xright=1;
@@ -94,7 +94,7 @@ int main(int argc,char **argv) {
 			}
 		}
 		/* write image to disk */
-		savebmp("mandel2.bmp",buffer,XSIZE,YSIZE);
+		savebmp("mandel.bmp",buffer,XSIZE,YSIZE);
 	}
 	return 0;
 }
