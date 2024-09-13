@@ -9,7 +9,7 @@
 // TASK: T1a
 // Include the MPI headerfile
 // BEGIN: T1a
-;
+include <mpi.h>
 // END: T1a
 
 
@@ -21,7 +21,7 @@ typedef double real_t;
 // TASK: T1b
 // Declare variables each MPI process will need
 // BEGIN: T1b
-;
+int world_size, world_rank;
 // END: T1b
 
 
@@ -180,7 +180,9 @@ int main ( int argc, char **argv )
 // TASK: T1c
 // Initialise MPI
 // BEGIN: T1c
-    ;
+    MPI_Init ( &argc, &argv );
+    MPI_Comm_size ( MPI_COMM_WORLD, &world_size );
+    MPI_Comm_rank ( MPI_COMM_WORLD, &world_rank );
 // END: T1c
     
     struct timeval t_start, t_end;
@@ -190,7 +192,15 @@ int main ( int argc, char **argv )
 // TASK: T2
 // Time your code
 // BEGIN: T2
+    gettimeofday ( &t_start, NULL );
     simulate();
+    gettimeofday ( &t_end, NULL );
+
+    if ( world_rank==0 )
+    {
+        printf ( "Elapsed time: %.6f seconds\n",
+                 WALLTIME(t_end) - WALLTIME(t_start) );
+    }
 // END: T2
    
     domain_finalize();
@@ -198,7 +208,7 @@ int main ( int argc, char **argv )
 // TASK: T1d
 // Finalise MPI
 // BEGIN: T1d
-    ;
+    MPI_Finalize()
 // END: T1d
 
     exit ( EXIT_SUCCESS );
