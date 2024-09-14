@@ -9,7 +9,7 @@
 // TASK: T1a
 // Include the MPI headerfile
 // BEGIN: T1a
-include <mpi.h>
+#include <mpi.h>
 // END: T1a
 
 
@@ -192,14 +192,15 @@ int main ( int argc, char **argv )
 // TASK: T2
 // Time your code
 // BEGIN: T2
-    gettimeofday ( &t_start, NULL );
-    simulate();
-    gettimeofday ( &t_end, NULL );
-
     if ( world_rank==0 )
     {
-        printf ( "Elapsed time: %.6f seconds\n",
-                 WALLTIME(t_end) - WALLTIME(t_start) );
+        gettimeofday ( &t_start, NULL );
+    }
+    simulate();
+    if ( world_rank==0 )
+    {
+        gettimeofday ( &t_end, NULL );
+        printf ( "Elapsed time: %.6f seconds\n", WALLTIME(t_end)-WALLTIME(t_start) );
     }
 // END: T2
    
@@ -208,7 +209,7 @@ int main ( int argc, char **argv )
 // TASK: T1d
 // Finalise MPI
 // BEGIN: T1d
-    MPI_Finalize()
+    MPI_Finalize();
 // END: T1d
 
     exit ( EXIT_SUCCESS );
