@@ -28,6 +28,8 @@ real_t
 // TASK: T1b
 // Declare variables each MPI process will need
 // BEGIN: T1b
+#define MPI_RANK_ROOT ( world_rank == 0 )
+
 #define U_prv(i,j) buffers[0][((i)+1)*(local_N+2)+(j)+1]
 #define U(i,j)     buffers[1][((i)+1)*(local_N+2)+(j)+1]
 #define U_nxt(i,j) buffers[2][((i)+1)*(local_N+2)+(j)+1]
@@ -280,7 +282,7 @@ int main ( int argc, char **argv )
     // TASK: T3
     // Distribute the user arguments to all the processes
     // BEGIN: T3
-    if (world_rank == 0)
+    if ( MPI_RANK_ROOT )
     {
         options = parse_args(argc, argv);
         if (!options)
@@ -317,18 +319,17 @@ int main ( int argc, char **argv )
     // TASK: T2
     // Time your code
     // BEGIN: T2
-    MPI_Barrier(cart_comm); // Ensure all processes start timing together
-    gettimeofday(&t_start, NULL);
-
-    simulate();
-
-    MPI_Barrier(cart_comm); // Ensure all processes finish timing together
-    gettimeofday(&t_end, NULL);
-
-    if (world_rank == 0)
+    if ( MPI_RANK_ROOT )
     {
-        double elapsed = WALLTIME(t_end) - WALLTIME(t_start);
-        printf("Simulation completed in %.6f seconds\n", elapsed);
+        gettimeofday ( &t_start, NULL );
+    }
+    simulate();
+    if ( MPI_RANK_ROOT )
+    {
+        gettimeofday ( &t_end, NULL );
+        printf ( "Total elapsed time: %lf seconds\n",
+                WALLTIME(t_end) - WALLTIME(t_start)
+                );
     }
     // END: T2
 
