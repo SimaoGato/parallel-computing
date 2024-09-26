@@ -279,6 +279,7 @@ int main ( int argc, char **argv )
     MPI_Comm_rank( MPI_COMM_WORLD, &world_rank );
     // END: T1c
 
+    OPTIONS *options = NULL;
 
     // TASK: T3
     // Distribute the user arguments to all the processes
@@ -343,6 +344,11 @@ int main ( int argc, char **argv )
     // BEGIN: T1d
     MPI_Finalize();
     // END: T1d
+    
+    if (world_rank == 0 && options)
+    {
+        free(options);
+    }
 
     exit ( EXIT_SUCCESS );
 }
