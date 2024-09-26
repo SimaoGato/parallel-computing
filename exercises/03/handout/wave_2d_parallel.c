@@ -74,23 +74,31 @@ void move_buffer_window ( void )
 void domain_initialize ( void )
 {
     // BEGIN: T4
-    buffers[0] = malloc ( (M+2)*(N+2)*sizeof(real_t) );
-    buffers[1] = malloc ( (M+2)*(N+2)*sizeof(real_t) );
-    buffers[2] = malloc ( (M+2)*(N+2)*sizeof(real_t) );
+    local_M = M / cart_dims[0];
+    local_N = N / cart_dims[1];
 
-    for ( int_t i=0; i<M; i++ )
+    printf("Rank %d: Initializing domain with local_M = %d, local_N = %d\n", world_rank, local_M, local_N);
+
+    buffers[0] = malloc((local_M + 2) * (local_N + 2) * sizeof(real_t));
+    buffers[1] = malloc((local_M + 2) * (local_N + 2) * sizeof(real_t));
+    buffers[2] = malloc((local_M + 2) * (local_N + 2) * sizeof(real_t));
+
+    for (int_t i = 0; i < local_M; i++)
     {
-        for ( int_t j=0; j<N; j++ )
+        for (int_t j = 0; j < local_N; j++)
         {
+            int_t global_i = cart_coords[0] * local_M + i;
+            int_t global_j = cart_coords[1] * local_N + j;
+
             // Calculate delta (radial distance) adjusted for M x N grid
-            real_t delta = sqrt ( ((i - M/2.0) * (i - M/2.0)) / (real_t)M +
-                                 ((j - N/2.0) * (j - N/2.0)) / (real_t)N );
-            U_prv(i,j) = U(i,j) = exp ( -4.0*delta*delta );
+            real_t delta = sqrt(((global_i - M / 2.0) * (global_i - M / 2.0)) / (real_t)M +
+                                ((global_j - N / 2.0) * (global_j - N / 2.0)) / (real_t)N);
+            U_prv(i, j) = U(i, j) = exp(-4.0 * delta * delta);
         }
     }
 
     // Set the time step for 2D case
-    dt = dx*dy / (c * sqrt (dx*dx+dy*dy));
+    dt = dx * dy / (c * sqrt(dx * dx + dy * dy));
     // END: T4
 }
 
