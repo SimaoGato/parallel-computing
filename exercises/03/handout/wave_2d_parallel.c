@@ -176,15 +176,33 @@ void border_exchange ( void )
 void boundary_condition ( void )
 {
     // BEGIN: T7
-    for ( int_t i=0; i<M; i++ )
+    if (cart_coords[0] == 0) // Top boundary
     {
-        U(i,-1) = U(i,1);
-        U(i,N)  = U(i,N-2);
+        for (int_t j = 0; j < local_N; j++)
+        {
+            U(-1, j) = U(1, j);
+        }
     }
-    for ( int_t j=0; j<N; j++ )
+    if (cart_coords[0] == cart_dims[0] - 1) // Bottom boundary
     {
-        U(-1,j) = U(1,j);
-        U(M,j)  = U(M-2,j);
+        for (int_t j = 0; j < local_N; j++)
+        {
+            U(local_M, j) = U(local_M - 2, j);
+        }
+    }
+    if (cart_coords[1] == 0) // Left boundary
+    {
+        for (int_t i = 0; i < local_M; i++)
+        {
+            U(i, -1) = U(i, 1);
+        }
+    }
+    if (cart_coords[1] == cart_dims[1] - 1) // Right boundary
+    {
+        for (int_t i = 0; i < local_M; i++)
+        {
+            U(i, local_N) = U(i, local_N - 2);
+        }
     }
     // END: T7
 }
