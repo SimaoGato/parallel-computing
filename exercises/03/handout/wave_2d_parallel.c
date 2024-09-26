@@ -14,14 +14,12 @@
 #include <mpi.h>
 // END: T1a
 
-
 // Convert 'struct timeval' into seconds in double prec. floating point
 #define WALLTIME(t) ((double)(t).tv_sec + 1e-6 * (double)(t).tv_usec)
 
 // Option to change numerical precision
 typedef int64_t int_t;
 typedef double real_t;
-
 
 // Buffers for three time steps, indexed with 2 ghost points for the boundary
 real_t
@@ -30,9 +28,9 @@ real_t
 // TASK: T1b
 // Declare variables each MPI process will need
 // BEGIN: T1b
-#define U_prv(i,j) buffers[0][((i)+1)*(N+2)+(j)+1]
-#define U(i,j)     buffers[1][((i)+1)*(N+2)+(j)+1]
-#define U_nxt(i,j) buffers[2][((i)+1)*(N+2)+(j)+1]
+#define U_prv(i,j) buffers[0][((i)+1)*(local_N+2)+(j)+1]
+#define U(i,j)     buffers[1][((i)+1)*(local_N+2)+(j)+1]
+#define U_nxt(i,j) buffers[2][((i)+1)*(local_N+2)+(j)+1]
 
 int world_size, world_rank;
 MPI_Comm cart_comm;
@@ -56,8 +54,6 @@ real_t
 dt;
 
 
-
-
 // Rotate the time step buffers.
 void move_buffer_window ( void )
 {
@@ -77,7 +73,7 @@ void domain_initialize ( void )
     local_M = M / cart_dims[0];
     local_N = N / cart_dims[1];
 
-    printf("Rank %d: Initializing domain with local_M = %d, local_N = %d\n", world_rank, local_M, local_N);
+    // printf("Rank %d: Initializing domain with local_M = %d, local_N = %d\n", world_rank, local_M, local_N);
 
     buffers[0] = malloc((local_M + 2) * (local_N + 2) * sizeof(real_t));
     buffers[1] = malloc((local_M + 2) * (local_N + 2) * sizeof(real_t));
@@ -122,9 +118,9 @@ void time_step ( void )
         for (int_t j = 0; j < local_N; j++)
         {
             U_nxt(i, j) = -U_prv(i, j) + 2.0 * U(i, j)
-                     + (dt * dt * c * c) / (dx * dy) * (
-                        U(i - 1, j) + U(i + 1, j) + U(i, j - 1) + U(i, j + 1) - 4.0 * U(i, j)
-                    );
+                + (dt * dt * c * c) / (dx * dy) * (
+                U(i - 1, j) + U(i + 1, j) + U(i, j - 1) + U(i, j + 1) - 4.0 * U(i, j)
+            );
         }
     }
     // END: T5
@@ -215,7 +211,7 @@ void domain_save ( int_t step )
     // BEGIN: T8
     char filename[256];
     sprintf(filename, "data/%.5ld.dat", step);
-    
+
     MPI_File fh;
     MPI_File_open(cart_comm, filename, MPI_MODE_CREATE | MPI_MODE_WRONLY, MPI_INFO_NULL, &fh);
 
@@ -310,11 +306,11 @@ int main ( int argc, char **argv )
     cart_periods[0] = cart_periods[1] = 0;
     MPI_Cart_create(MPI_COMM_WORLD, 2, cart_dims, cart_periods, 1, &cart_comm);
     MPI_Cart_coords(cart_comm, world_rank, 2, cart_coords);
+
     // END: T3
 
     // Set up the initial state of the domain
     domain_initialize();
-
 
     struct timeval t_start, t_end;
 
@@ -344,7 +340,7 @@ int main ( int argc, char **argv )
     // BEGIN: T1d
     MPI_Finalize();
     // END: T1d
-    
+
     if (world_rank == 0 && options)
     {
         free(options);
