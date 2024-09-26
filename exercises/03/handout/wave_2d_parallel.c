@@ -29,6 +29,10 @@ real_t
 // Declare variables each MPI process will need
 // BEGIN: T1b
 #define MPI_RANK_ROOT ( world_rank == 0 )
+#define IS_TOP_BORDER ( cart_coords[0] == 0 )
+#define IS_BOTTOM_BORDER ( cart_coords[0] == cart_dims[0] - 1 )
+#define IS_LEFT_BORDER ( cart_coords[1] == 0 )
+#define IS_RIGHT_BORDER ( cart_coords[1] == cart_dims[1] - 1 )
 
 #define U_prv(i,j) buffers[0][((i)+1)*(local_N+2)+(j)+1]
 #define U(i,j)     buffers[1][((i)+1)*(local_N+2)+(j)+1]
@@ -174,28 +178,28 @@ void border_exchange ( void )
 void boundary_condition ( void )
 {
     // BEGIN: T7
-    if (cart_coords[0] == 0) // Top boundary
+    if (IS_TOP_BORDER)
     {
         for (int_t j = 0; j < local_N; j++)
         {
             U(-1, j) = U(1, j);
         }
     }
-    if (cart_coords[0] == cart_dims[0] - 1) // Bottom boundary
+    if (IS_BOTTOM_BORDER)
     {
         for (int_t j = 0; j < local_N; j++)
         {
             U(local_M, j) = U(local_M - 2, j);
         }
     }
-    if (cart_coords[1] == 0) // Left boundary
+    if (IS_LEFT_BORDER)
     {
         for (int_t i = 0; i < local_M; i++)
         {
             U(i, -1) = U(i, 1);
         }
     }
-    if (cart_coords[1] == cart_dims[1] - 1) // Right boundary
+    if (IS_RIGHT_BORDER)
     {
         for (int_t i = 0; i < local_M; i++)
         {
@@ -342,7 +346,7 @@ int main ( int argc, char **argv )
     MPI_Finalize();
     // END: T1d
 
-    if (world_rank == 0 && options)
+    if ( MPI_RANK_ROOT && options )
     {
         free(options);
     }
