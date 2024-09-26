@@ -204,17 +204,32 @@ int main ( int argc, char **argv )
     // TASK: T3
     // Distribute the user arguments to all the processes
     // BEGIN: T3
-    OPTIONS *options = parse_args( argc, argv );
-    if ( !options )
+    if (world_rank == 0)
     {
-        fprintf( stderr, "Argument parsing failed\n" );
-        exit( EXIT_FAILURE );
+        options = parse_args(argc, argv);
+        if (!options)
+        {
+            fprintf(stderr, "Argument parsing failed\n");
+            MPI_Abort(MPI_COMM_WORLD, EXIT_FAILURE);
+        }
+        M = options->M;
+        N = options->N;
+        max_iteration = options->max_iteration;
+        snapshot_freq = options->snapshot_frequency;
     }
 
-    M = options->M;
-    N = options->N;
-    max_iteration = options->max_iteration;
-    snapshot_freq = options->snapshot_frequency;
+    // Broadcast the parameters to all processes
+    MPI_Bcast(&M, 1, MPI_INT64_T, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&N, 1, MPI_INT64_T, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&max_iteration, 1, MPI_INT64_T, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&snapshot_freq, 1, MPI_INT64_T, 0, MPI_COMM_WORLD);
+
+    // Set up the Cartesian communicator
+    cart_dims[0] = cart_dims[1] = 0;
+    MPI_Dims_create(world_size, 2, cart_dims);
+    cart_periods[0] = cart_periods[1] = 0;
+    MPI_Cart_create(MPI_COMM_WORLD, 2, cart_dims, cart_periods, 1, &cart_comm);
+    MPI_Cart_coords(cart_comm, world_rank, 2, cart_coords);
     // END: T3
 
     // Set up the initial state of the domain
