@@ -117,14 +117,14 @@ void domain_finalize ( void )
 void time_step ( void )
 {
     // BEGIN: T5
-    for ( int_t i=0; i<M; i++ )
+    for (int_t i = 0; i < local_M; i++)
     {
-        for ( int_t j=0; j<N; j++ )
+        for (int_t j = 0; j < local_N; j++)
         {
-            U_nxt(i,j) = -U_prv(i,j) + 2.0*U(i,j)
-                + (dt*dt*c*c)/(dx*dy) * (
-                U(i-1,j)+U(i+1,j)+U(i,j-1)+U(i,j+1)-4.0*U(i,j)
-            );
+            U_nxt(i, j) = -U_prv(i, j) + 2.0 * U(i, j)
+                     + (dt * dt * c * c) / (dx * dy) * (
+                        U(i - 1, j) + U(i + 1, j) + U(i, j - 1) + U(i, j + 1) - 4.0 * U(i, j)
+                    );
         }
     }
     // END: T5
