@@ -135,7 +135,38 @@ void time_step ( void )
 void border_exchange ( void )
 {
     // BEGIN: T6
-    ;
+    MPI_Status status;
+    int north, south, east, west;
+    MPI_Datatype column_type;
+
+    MPI_Cart_shift(cart_comm, 0, 1, &north, &south);
+    MPI_Cart_shift(cart_comm, 1, 1, &west, &east);
+
+    // Create column datatype
+    MPI_Type_vector(local_M, 1, local_N + 2, MPI_DOUBLE, &column_type);
+    MPI_Type_commit(&column_type);
+
+    // Send to north, receive from south
+    MPI_Sendrecv(&U(0, 0), local_N, MPI_DOUBLE, north, 0,
+                 &U(local_M, 0), local_N, MPI_DOUBLE, south, 0,
+                 cart_comm, &status);
+
+    // Send to south, receive from north
+    MPI_Sendrecv(&U(local_M - 1, 0), local_N, MPI_DOUBLE, south, 0,
+                 &U(-1, 0), local_N, MPI_DOUBLE, north, 0,
+                 cart_comm, &status);
+
+    // Send to west, receive from east
+    MPI_Sendrecv(&U(0, 0), 1, column_type, west, 0,
+                 &U(0, local_N), 1, column_type, east, 0,
+                 cart_comm, &status);
+
+    // Send to east, receive from west
+    MPI_Sendrecv(&U(0, local_N - 1), 1, column_type, east, 0,
+                 &U(0, -1), 1, column_type, west, 0,
+                 cart_comm, &status);
+
+    MPI_Type_free(&column_type);
     // END: T6
 }
 
