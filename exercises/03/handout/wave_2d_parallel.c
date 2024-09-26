@@ -214,13 +214,35 @@ void domain_save ( int_t step )
 {
     // BEGIN: T8
     char filename[256];
-    sprintf ( filename, "data/%.5ld.dat", step );
-    FILE *out = fopen ( filename, "wb" );
-    for ( int_t i=0; i<M; i++ )
-    {
-        fwrite ( &U(i,0), sizeof(real_t), N, out );
+    sprintf(filename, "data/%.5ld.dat", step);
+    
+    MPI_File fh;
+    MPI_File_open(cart_comm, filename, MPI_MODE_CREATE | MPI_MODE_WRONLY, MPI_INFO_NULL, &fh);
+
+    // Create an MPI datatype to represent the local block
+    MPI_Datatype local_block;
+    MPI_Type_vector(local_M, local_N, N, MPI_DOUBLE, &local_block);
+    MPI_Type_commit(&local_block);
+
+    // Calculate the offset for this process
+    MPI_Offset offset = (cart_coords[0] * local_M * N + cart_coords[1] * local_N) * sizeof(real_t);
+
+    // Set the view
+    MPI_File_set_view(fh, offset, MPI_DOUBLE, local_block, "native", MPI_INFO_NULL);
+
+    // Write the local data
+    real_t *local_data = malloc(local_M * local_N * sizeof(real_t));
+    for (int_t i = 0; i < local_M; i++) {
+        for (int_t j = 0; j < local_N; j++) {
+            local_data[i * local_N + j] = U(i, j);
+        }
     }
-    fclose ( out );
+
+    MPI_File_write_all(fh, local_data, local_M * local_N, MPI_DOUBLE, MPI_STATUS_IGNORE);
+
+    free(local_data);
+    MPI_Type_free(&local_block);
+    MPI_File_close(&fh);
     // END: T8
 }
 
