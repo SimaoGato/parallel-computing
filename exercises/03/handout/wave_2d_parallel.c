@@ -42,6 +42,7 @@ int world_size, world_rank;
 MPI_Comm cart_comm;
 int cart_dims[2], cart_periods[2], cart_coords[2];
 int local_M, local_N;
+int north, south, east, west;
 // END: T1b
 
 // Simulation parameters: size, step count, and how often to save the state
@@ -137,12 +138,7 @@ void time_step ( void )
 void border_exchange ( void )
 {
     // BEGIN: T6
-    MPI_Status status;
-    int north, south, east, west;
     MPI_Datatype column_type;
-
-    MPI_Cart_shift(cart_comm, 0, 1, &north, &south);
-    MPI_Cart_shift(cart_comm, 1, 1, &west, &east);
 
     // Create column datatype
     MPI_Type_vector(local_M, 1, local_N + 2, MPI_DOUBLE, &column_type);
@@ -151,22 +147,22 @@ void border_exchange ( void )
     // Send to north, receive from south
     MPI_Sendrecv(&U(0, 0), local_N, MPI_DOUBLE, north, 0,
                  &U(local_M, 0), local_N, MPI_DOUBLE, south, 0,
-                 cart_comm, &status);
+                 cart_comm, MPI_STATUS_IGNORE);
 
     // Send to south, receive from north
     MPI_Sendrecv(&U(local_M - 1, 0), local_N, MPI_DOUBLE, south, 0,
                  &U(-1, 0), local_N, MPI_DOUBLE, north, 0,
-                 cart_comm, &status);
+                 cart_comm, MPI_STATUS_IGNORE);
 
     // Send to west, receive from east
     MPI_Sendrecv(&U(0, 0), 1, column_type, west, 0,
                  &U(0, local_N), 1, column_type, east, 0,
-                 cart_comm, &status);
+                 cart_comm, MPI_STATUS_IGNORE);
 
     // Send to east, receive from west
     MPI_Sendrecv(&U(0, local_N - 1), 1, column_type, east, 0,
                  &U(0, -1), 1, column_type, west, 0,
-                 cart_comm, &status);
+                 cart_comm, MPI_STATUS_IGNORE);
 
     MPI_Type_free(&column_type);
     // END: T6
@@ -178,20 +174,6 @@ void border_exchange ( void )
 void boundary_condition ( void )
 {
     // BEGIN: T7
-    if (IS_TOP_BORDER)
-    {
-        for (int_t j = 0; j < local_N; j++)
-        {
-            U(-1, j) = U(1, j);
-        }
-    }
-    if (IS_BOTTOM_BORDER)
-    {
-        for (int_t j = 0; j < local_N; j++)
-        {
-            U(local_M, j) = U(local_M - 2, j);
-        }
-    }
     if (IS_LEFT_BORDER)
     {
         for (int_t i = 0; i < local_M; i++)
@@ -204,6 +186,20 @@ void boundary_condition ( void )
         for (int_t i = 0; i < local_M; i++)
         {
             U(i, local_N) = U(i, local_N - 2);
+        }
+    }
+    if (IS_TOP_BORDER)
+    {
+        for (int_t j = 0; j < local_N; j++)
+        {
+            U(-1, j) = U(1, j);
+        }
+    }
+    if (IS_BOTTOM_BORDER)
+    {
+        for (int_t j = 0; j < local_N; j++)
+        {
+            U(local_M, j) = U(local_M - 2, j);
         }
     }
     // END: T7
@@ -313,6 +309,9 @@ int main ( int argc, char **argv )
     MPI_Cart_create(MPI_COMM_WORLD, 2, cart_dims, cart_periods, 1, &cart_comm);
     MPI_Cart_coords(cart_comm, world_rank, 2, cart_coords);
 
+    // Get the neighbours
+    MPI_Cart_shift(cart_comm, 0, 1, &north, &south);
+    MPI_Cart_shift(cart_comm, 1, 1, &west, &east);
     // END: T3
 
     // Set up the initial state of the domain
