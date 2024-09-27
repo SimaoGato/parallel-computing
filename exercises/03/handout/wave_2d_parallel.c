@@ -140,7 +140,7 @@ void border_exchange ( void )
     // BEGIN: T6
     MPI_Datatype column_type;
 
-    // Create column datatype
+    // Create column datatype to send and receive the border columns (helpful for east-west communication)
     MPI_Type_vector(local_M, 1, local_N + 2, MPI_DOUBLE, &column_type);
     MPI_Type_commit(&column_type);
 
@@ -217,15 +217,12 @@ void domain_save ( int_t step )
     MPI_File fh;
     MPI_File_open(cart_comm, filename, MPI_MODE_CREATE | MPI_MODE_WRONLY, MPI_INFO_NULL, &fh);
 
-    // Create an MPI datatype to represent the local block
+    // Create an MPI datatype to represent the local block of data governed by this process
     MPI_Datatype local_block;
     MPI_Type_vector(local_M, local_N, N, MPI_DOUBLE, &local_block);
     MPI_Type_commit(&local_block);
 
-    // Calculate the offset for this process
     MPI_Offset offset = (cart_coords[0] * local_M * N + cart_coords[1] * local_N) * sizeof(real_t);
-
-    // Set the view
     MPI_File_set_view(fh, offset, MPI_DOUBLE, local_block, "native", MPI_INFO_NULL);
 
     // Write the local data
