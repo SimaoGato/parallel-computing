@@ -67,7 +67,7 @@ void domain_finalize(void) {
 // Integration formula
 void time_step(void) {
 // BEGIN: T7
-#pragma omp parallel for collapse(2)
+#pragma omp parallel for
   for (int_t i = 0; i < N; i++)
     for (int_t j = 0; j < N; j++)
       U_nxt(i, j) = -U_prv(i, j) + 2.0 * U(i, j) +

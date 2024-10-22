@@ -24,6 +24,8 @@ int_t n_threads = 1;
 pthread_barrier_t barrier;
 // END: T1b
 
+#define IS_ROOT(thread_id) (thread_id == 0)
+
 // Performance measurement
 struct timeval t_start, t_end;
 #define WALLTIME(t) ((double)(t).tv_sec + 1e-6 * (double)(t).tv_usec)
@@ -79,9 +81,15 @@ void domain_finalize(void) {
 // Integration formula
 void time_step(int_t thread_id) {
   // BEGIN: T3
-  int_t chunk = N / n_threads;
-  int_t start = thread_id * chunk;
-  int_t end = (thread_id == n_threads - 1) ? N : start + chunk;
+  int_t n_local = N / n_threads;
+  int_t start = thread_id * n_local;
+  int_t end = 0;
+
+  if (thread_id == n_threads - 1) {
+    end = N;
+  } else {
+    end = start + n_local;
+  }
 
   for (int_t i = start; i < end; i++)
     for (int_t j = 0; j < N; j++)
@@ -96,16 +104,22 @@ void time_step(int_t thread_id) {
 // Neumann (reflective) boundary condition
 void boundary_condition(int_t thread_id) {
   // BEGIN: T4
-  int_t chunk = N / n_threads;
-  int_t start = thread_id * chunk;
-  int_t end = (thread_id == n_threads - 1) ? N : start + chunk;
+  int_t n_local = N / n_threads;
+  int_t start = thread_id * n_local;
+  int_t end = 0;
+
+  if (thread_id == n_threads - 1) {
+    end = N;
+  } else {
+    end = start + n_local;
+  }
 
   for (int_t i = start; i < end; i++) {
     U(i, -1) = U(i, 1);
     U(i, N) = U(i, N - 2);
   }
 
-  if (thread_id == 0) {
+  if (IS_ROOT(thread_id)) {
     for (int_t j = 0; j < N; j++) {
       U(-1, j) = U(1, j);
     }
@@ -131,13 +145,16 @@ void domain_save(int_t step) {
 
 // TASK: T5
 // Main loop
-void *simulate(void *arg) {
+void *simulate(void *id) {
   // BEGIN: T5
-  int_t thread_id = *(int_t *)arg;
+  int_t thread_id = *(int_t *)id;
+
+  // printf("Thread %ld started\n", thread_id);
 
   // Go through each time step
   for (int_t iteration = 0; iteration <= max_iteration; iteration++) {
-    if (thread_id == 0 && (iteration % snapshot_freq) == 0) {
+
+    if (IS_ROOT(thread_id) && (iteration % snapshot_freq) == 0) {
       domain_save(iteration / snapshot_freq);
     }
 
@@ -148,10 +165,11 @@ void *simulate(void *arg) {
     time_step(thread_id);
     pthread_barrier_wait(&barrier);
 
-    if (thread_id == 0) {
+    if (IS_ROOT(thread_id)) {
       // Rotate the time step buffers
       move_buffer_window();
     }
+
     pthread_barrier_wait(&barrier);
   }
 
